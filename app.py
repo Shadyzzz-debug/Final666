@@ -9,34 +9,28 @@ from keras.models import load_model
 # --- Configuración MQTT ---
 broker="broker.hivemq.com"
 port=1883
-# Tópicos
-TOPIC_GESTURE = "IMIA" # Control de Acceso (Página 1)
-TOPIC_ALARM = "Vigilancia/Alarma" # Control de Alarma/Buzzer (Página 2)
-TOPIC_STATUS_LED = "Vigilancia/LED" # Control de LED (Página 2)
+TOPIC_GESTURE = "IMIA" 
+TOPIC_ALARM = "Vigilancia/Alarma" 
+TOPIC_STATUS_LED = "Vigilancia/LED" 
 
 
 # --- Funciones de MQTT ---
 def on_publish(client, userdata, result):
-    # print("El dato ha sido publicado")
     pass
 
 def on_message(client, userdata, message):
-    # Esta función se llama si recibimos mensajes (por ejemplo, logs o temperatura)
     try:
         payload = str(message.payload.decode("utf-8"))
-        # Usamos un bloqueo para evitar que el log se actualice continuamente
-        # y cause un re-run infinito. Streamlit no maneja muy bien los logs asíncronos.
         if 'mqtt_log' in st.session_state:
-             st.session_state.mqtt_log += f"\n> Recibido: {payload}"
+              st.session_state.mqtt_log += f"\n> Recibido: {payload}"
     except Exception as e:
         if 'mqtt_log' in st.session_state:
             st.session_state.mqtt_log += f"\n> Error al decodificar: {e}"
 
-# Inicialización de Cliente y Conexión (Usando Session State para persistencia)
 if 'mqtt_log' not in st.session_state:
     st.session_state.mqtt_log = "Registro de Eventos: Listado para la noche de caza..."
     st.session_state.mqtt_status = "Conexión MQTT: Pendiente"
-    st.session_state.client1 = None # Inicializa el cliente a None
+    st.session_state.client1 = None 
 
 if st.session_state.client1 is None:
     try:
@@ -44,91 +38,112 @@ if st.session_state.client1 is None:
         client1.on_message = on_message
         client1.on_publish = on_publish
         client1.connect(broker, port)
-        client1.subscribe("Vigilancia/Log") # Tópico para logs/temperatura del ESP32
+        client1.subscribe("Vigilancia/Log") 
         client1.loop_start()
         
-        # Guarda el cliente conectado en el Session State
         st.session_state.client1 = client1 
         st.session_state.mqtt_status = "Conexión MQTT: Establecida"
     except Exception as e:
-        # Si la conexión falla, client1 permanece en None
         st.session_state.mqtt_status = f"Error al conectar MQTT: {e}"
 
 
 # --- Estética y Tema Bloodborne (CSS Inyectado) ---
 BLOODBORNE_CSS = """
 <style>
-/* 1. Fondo Oscuro y Textura */
+/* Fondo Oscuro y Textura de Yharnam */
 body {
-    background-color: #0b0b0d; /* Fondo muy oscuro */
-    color: #bfa05d; /* Dorado/Amarillo pálido para el texto principal */
-    font-family: 'Times New Roman', serif; /* Tipo de letra más antiguo/gótico */
+    background-color: #0d0d0f; 
+    color: #bfa05d; 
+    font-family: 'Times New Roman', serif; 
 }
 
-/* 2. Títulos y Encabezados */
-h1, h2, .st-emotion-cache-10trblm {
-    color: #E6E1D6; /* Blanco sucio */
-    text-shadow: 2px 2px 4px #000000;
+/* Títulos y Encabezados */
+h1, h2, h3, .st-emotion-cache-10trblm {
+    color: #E6E1D6; 
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
     font-family: 'Georgia', serif;
-    border-bottom: 1px solid #333333;
-    padding-bottom: 5px;
+    border-bottom: 2px solid #333333;
+    padding-bottom: 8px;
+    margin-top: 20px;
 }
 
-/* 3. Contenedores y Cajas de Entrada (Look and Feel de Papel Viejo/Pergamino Oscuro) */
-.st-emotion-cache-121p9e6, .st-emotion-cache-1wb9m6h, .st-emotion-cache-12w0qpk { 
-    background-color: #2b2b2e; /* Contenedores oscuros */
+/* Contenedores y Cajas de Entrada (Look and Feel de Piedra Oscura) */
+.st-emotion-cache-121p9e6, .st-emotion-cache-1wb9m6h, .st-emotion-cache-12w0qpk, .stTextInput > div > div { 
+    background-color: #1e1e20; 
     border: 1px solid #4a4a4a;
-    border-radius: 8px;
+    border-radius: 6px;
     padding: 15px;
-    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.5); /* Sombra oscura */
+    box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.6); 
 }
 
-/* 4. Botones (Estilo Hierro/Metal Antiguo) */
+/* Texto de Citas/Información */
+p, .st-b5 {
+    color: #c9c3b8; 
+}
+
+/* Botones (Estilo Hierro Forjado) */
 .stButton>button {
     background-color: #3b3b40;
-    color: #e0e0e0;
-    border: 2px solid #6b6b6f;
-    border-radius: 4px;
-    padding: 10px 20px;
+    color: #E6E1D6;
+    border: 3px outset #6b6b6f; /* Efecto 3D de relieve */
+    border-radius: 3px;
+    padding: 10px 25px;
     font-weight: bold;
+    letter-spacing: 1px;
     transition: all 0.2s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
 }
 .stButton>button:hover {
     background-color: #4f4f54;
-    color: #ffcc00; /* Efecto brillo al pasar el ratón */
-    border-color: #ffcc00;
+    color: #ffc400; /* Dorado brillante */
+    border-color: #ffc400;
+    box-shadow: 0 0 10px rgba(255, 196, 0, 0.5); 
+}
+.stButton>button:active {
+    border: 3px inset #6b6b6f; /* Efecto hundido al hacer clic */
 }
 
-/* 5. Inputs (Cámara, Texto) */
+
+/* Inputs (Cámara, Texto) */
 .stCameraInput, .stTextInput > div > div > input {
-    background-color: #1f1f21;
-    color: #bfa05d;
-    border: 1px solid #4a4a4a;
-}
-
-/* 6. Barra Lateral */
-.st-emotion-cache-vk33v6 {
     background-color: #1a1a1c;
     color: #bfa05d;
+    border: 1px solid #5a5a5a;
+    border-radius: 4px;
 }
-.st-emotion-cache-1629p8f { /* Menú de navegación en la barra lateral */
+
+/* Barra Lateral */
+.st-emotion-cache-vk33v6 {
+    background-color: #101012;
+    color: #bfa05d;
+    border-right: 1px solid #2f2f31;
+}
+.st-emotion-cache-1629p8f { 
     color: #E6E1D6; 
 }
 
+/* Alerts (Advertencias/Éxito) */
+.stAlert {
+    background-color: #2b2b2e !important;
+    color: #bfa05d !important;
+    border: 1px solid #4a4a4a !important;
+    border-left: 5px solid #ffcc00 !important; 
+}
+.stAlert [role="img"] { /* Iconos de alerta */
+    color: #ffcc00 !important;
+}
+
 /* Ocultar botones de menú de Streamlit */
-#MainMenu {visibility: hidden;}
-footer {visibility: hidden;}
-header {visibility: hidden;}
+#MainMenu, footer, header {visibility: hidden;}
 
 </style>
 """
 st.markdown(BLOODBORNE_CSS, unsafe_allow_html=True)
 
 
-# --- Carga del Modelo de Keras (Modelo pre-entrenado) ---
+# --- Carga del Modelo de Keras ---
 @st.cache_resource
 def load_keras_model():
-    # Asume que 'keras_model.h5' está disponible en el entorno de ejecución
     return load_model('keras_model.h5')
 
 model = load_keras_model()
@@ -148,7 +163,7 @@ st.sidebar.text("")
 st.sidebar.text(st.session_state.mqtt_status)
 
 
-# --- PÁGINA 1: CONTROL DE ACCESO (MODO IMAGEN) ---
+# --- PÁGINA 1: CONTROL DE ACCESO ---
 if page == "page_access":
     st.title("El Portal de Yharnam")
     st.subheader("La Puerta de Hierro: Un Velo entre Mundos")
@@ -181,11 +196,11 @@ if page == "page_access":
 
                 gesto_detectado = None
 
-                if prediction[0][0] > 0.7: # Umbral alto para "Abre"
+                if prediction[0][0] > 0.7: 
                     gesto_detectado = 'Abre'
                     st.header('🔑 Sello Aceptado: **El Portal se Abre**')
                     st.info("La cerradura cede al juramento. Entra antes de que la noche te consuma.")
-                elif prediction[0][1] > 0.7: # Umbral alto para "Cierra"
+                elif prediction[0][1] > 0.7: 
                     gesto_detectado = 'Cierra'
                     st.header('🔒 Sello Impuesto: **El Portal se Cierra**')
                     st.warning("El velo se vuelve a tejer. El portal permanece sellado de la pesadilla.")
@@ -199,12 +214,12 @@ if page == "page_access":
                     payload = json.dumps({'gesto': gesto_detectado})
                     st.session_state.client1.publish(TOPIC_GESTURE, payload, qos=0, retain=False)
                     st.session_state.mqtt_log += f"\n[Acceso] -> Publicado: {gesto_detectado}"
-                    time.sleep(0.5) # Pausa breve para que el ESP32 reciba y actúe
+                    time.sleep(0.5) 
 
             except Exception as e:
                 st.error(f"Error durante el procesamiento de la imagen: {e}")
 
-# --- PÁGINA 2: ALERTA DE HOGAR (MODO TEXTO/CONTROLES) ---
+# --- PÁGINA 2: ALERTA DE HOGAR ---
 elif page == "page_defense":
     st.title("La Linterna del Cazador")
     st.subheader("Vigilancia de la Mansión: El Ojo de la Noche")
@@ -215,7 +230,6 @@ elif page == "page_defense":
     </p>
     """, unsafe_allow_html=True)
     
-    # Comprobación de conexión antes de renderizar botones interactivos
     if st.session_state.client1 is None:
         st.error("La aplicación de vigilancia está inactiva. No se pueden enviar comandos hasta que se establezca la conexión MQTT.")
     else:
@@ -249,7 +263,7 @@ elif page == "page_defense":
             st.session_state.mqtt_log += "\n[Alarma] -> Publicado: LOW"
             st.info("Campana silenciada. El silencio es nuestro aliado.")
 
-        # --- Interacción 3: Comando de Voz/Texto (Modo de Entrada de Texto) ---
+        # --- Interacción 3: Comando de Voz/Texto ---
         st.markdown("### Comando Rápido (Entrada de Texto)")
         
         comando_texto = st.text_input("Ingresa un comando ('abrir' o 'cerrar'):", key="text_command")
@@ -270,23 +284,17 @@ elif page == "page_defense":
                 st.warning("Comando no reconocido. Usa 'abrir' o 'cerrar'.")
 
 
-# --- Registro de Eventos (Se muestra en ambas páginas) ---
+# --- Registro de Eventos ---
 st.sidebar.markdown("---")
 st.sidebar.markdown("### Pergamino de Eventos")
 st.sidebar.text_area("Logs MQTT", st.session_state.mqtt_log, height=300)
 
 # -----------------------------------------------------------
-# --- CORRECCIÓN DEL ERROR ---
+# --- CORRECCIÓN FINAL ---
 # -----------------------------------------------------------
-# La llamada a loop_end() debe estar protegida para evitar el AttributeError
-# si el cliente nunca se inicializó correctamente (por ejemplo, si falló el connect).
 if st.session_state.client1 is not None:
     try:
         st.session_state.client1.loop_end()
     except Exception as e:
-        # Esto puede ocurrir si el cliente ya estaba inactivo o desconectado de forma inesperada.
-        # En Streamlit, a veces es mejor dejar que la aplicación se reinicie o manejar el error en los logs.
         pass
-# -----------------------------------------------------------
-
 
